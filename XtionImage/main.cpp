@@ -164,11 +164,6 @@ int main(int argc,char *argv[])
     usage();
   
 
-  //for (int i=0; i<argc; i++)    
-  //  printf ("[%d] - %s\n",i, argv[i]);
-
-
-    
   xtion_get_image(atoi(argv[2]), argv[4][0]);
   return 0;
 }
