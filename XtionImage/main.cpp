@@ -31,7 +31,7 @@
 #define MAX_LENGHT 10000
 #define MAX_TIMES 3
 
-int xtion_get_image(int resolution, char sensor_option)
+int xtion_get_image(int resolution, char sensor_option, char* filename)
 {
   openni::Device device;
 
@@ -41,7 +41,8 @@ int xtion_get_image(int resolution, char sensor_option)
     openni::Device device;
     int ret = device.open(openni::ANY_DEVICE);
     if ( ret != openni::STATUS_OK ) {
-      return 0;
+      printf(" Error(%d) to open Xtion sensor, be sure xtion is connected\n", ret);
+      return -1;
     }
     
     openni::SensorType sensor; 
@@ -139,7 +140,9 @@ int xtion_get_image(int resolution, char sensor_option)
 	frame.convertTo( frame, CV_8U );	    
       }	
       
-    imwrite( "image.jpg" , frame );
+    imwrite(filename, frame);
+
+    printf("Image saved in %s\n", filename);
     
     videoStream.stop();    
     openni::OpenNI::shutdown();	
@@ -161,9 +164,11 @@ void usage ()
   printf("\t -s : Sensor Type\n");
   printf("\t\t c: for color image\n");
   printf("\t\t d: for depth image\n");
-  printf("\t\t i: for ir image\n");
+  printf("\t\t i: for ir image\n\n");
+  printf("\t -o : file name path\n");
+
   printf("\n");
-  printf("\t Example: XtionImage -r 0 -s d\n");
+  printf("\t Example: XtionImage -r 0 -s d -o /tmp/image.jpg\n");
   printf("\n");
   exit(-1);
 }
@@ -171,16 +176,16 @@ void usage ()
 int main(int argc,char *argv[])
 {
 
-  if (argc != 5)    
+  if (argc != 7)
     usage();
 
-  if ( strcmp(argv[1],"-r")!=0  ||  strcmp(argv[3],"-s")!=0)
+  if ( strcmp(argv[1],"-r")!=0  ||  strcmp(argv[3],"-s")!=0 || strcmp(argv[5],"-o")!=0 )
     usage();
 
   if ( (strcmp(argv[2],"0")!=0 && strcmp(argv[2],"1")!=0) || (strcmp(argv[4],"c")!=0 && strcmp(argv[4],"d")!=0 && strcmp(argv[4],"i")!=0 ))
     usage();
   
 
-  xtion_get_image(atoi(argv[2]), argv[4][0]);
+  xtion_get_image(atoi(argv[2]), argv[4][0], argv[6]);
   return 0;
 }
