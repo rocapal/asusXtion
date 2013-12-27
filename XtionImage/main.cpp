@@ -28,6 +28,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
 
+#define MAX_LENGHT 10000
+#define MAX_TIMES 3
+
 int xtion_get_image(int resolution, char sensor_option)
 {
   openni::Device device;
@@ -78,52 +81,66 @@ int xtion_get_image(int resolution, char sensor_option)
     streams.push_back( &videoStream );
     
     cv::Mat frame;
-    
-    // Repeat at least 5 times to wait Xtion is not cold
-    for (int i=0; i<5; i++)
-      {
 	
+	
+    openni::VideoFrameRef sensorFrame;
+
+    // Repeat at least MAX_TIMES to wait Xtion is not cold
+    for (int i=0; i<MAX_TIMES; i++)
+      {
 	int changedIndex;
 	openni::OpenNI::waitForAnyStream( &streams[0], streams.size(), &changedIndex );
 	
 	if (changedIndex != 0)
 	  continue;
 	
-	openni::VideoFrameRef sensorFrame;
 	videoStream.readFrame( &sensorFrame );
-	
-	if ( !sensorFrame.isValid())
-	  continue;
-	
-	if (sensor == openni::SENSOR_COLOR)
-	  {		    
-	    openni::RGB888Pixel* imageBuffer =  (openni::RGB888Pixel*)sensorFrame.getData();
-	    frame.create(sensorFrame.getHeight(), sensorFrame.getWidth(), CV_8UC3);
-	    memcpy( frame.data, imageBuffer,   3*sensorFrame.getHeight()*sensorFrame.getWidth()*sizeof(uint8_t) );
-	    cv::cvtColor(frame,frame, CV_RGB2BGR); 
-	    imwrite( "image.jpg" , frame );
-	    
-	  }
-	
-	else if (sensor == openni::SENSOR_DEPTH)
-	  {
-		
-	  }
-	else if (sensor == openni::SENSOR_IR)
-	  {
-	    
-	    frame = cv::Mat(videoStream.getVideoMode().getResolutionY(),
-			    videoStream.getVideoMode().getResolutionX(),
-			    CV_16U, (char*)sensorFrame.getData() );
-	    
-	    frame.convertTo( frame, CV_8U );
-	    
-	  }
+      }
+    
+    if ( !sensorFrame.isValid())
+      {
+	printf("Error in sensorFrame.isValid()\n");
+	exit(-1);
+      }
+    
+    if (sensor == openni::SENSOR_COLOR)
+      {		    
+	openni::RGB888Pixel* imageBuffer =  (openni::RGB888Pixel*)sensorFrame.getData();
+	frame.create(sensorFrame.getHeight(), sensorFrame.getWidth(), CV_8UC3);
+	memcpy( frame.data, imageBuffer,   3*sensorFrame.getHeight()*sensorFrame.getWidth()*sizeof(uint8_t) );
+	cv::cvtColor(frame,frame, CV_RGB2BGR); 
 	
       }
     
+    else if (sensor == openni::SENSOR_DEPTH)
+      {
+	const openni::DepthPixel* pDepth = (const openni::DepthPixel*)sensorFrame.getData();
+	
+	frame = cv::Mat(videoStream.getVideoMode().getResolutionY(),
+			videoStream.getVideoMode().getResolutionX(),
+			CV_8UC3 );
+	
+	for (int y=0; y<sensorFrame.getHeight(); y++)
+	  {
+	    for (int x=0; x<sensorFrame.getWidth(); ++x, ++pDepth)
+	      {
+		if (*pDepth != 0)
+		  frame.data[(y*sensorFrame.getWidth()+ x)*3+1] = (float(*pDepth)/(float)MAX_LENGHT)*255.;
+	      }
+	  }	    
+      }
+    else if (sensor == openni::SENSOR_IR)
+      {
+	
+	frame = cv::Mat(videoStream.getVideoMode().getResolutionY(),
+			videoStream.getVideoMode().getResolutionX(),
+			CV_16U, (char*)sensorFrame.getData() );
+	
+	frame.convertTo( frame, CV_8U );	    
+      }	
+      
     imwrite( "image.jpg" , frame );
-
+    
     videoStream.stop();    
     openni::OpenNI::shutdown();	
   }
