@@ -56,16 +56,19 @@ Usage:
 ```bash
 $ ./XtionImage -r 0 -s c -o /tmp/image.jpg
 ```
+![ScreenShot](https://github.com/rocapal/asusXtion/raw/master/images/color-image.png)
 
 * Get depth image to 320x240
 ```bash
 $ ./XtionImage -r 0 -s d -o /tmp/image.jpg
 ```
+![ScreenShot](https://github.com/rocapal/asusXtion/raw/master/images/depth-image.png)
 
 * Get IR image to 640x480
 ```bash
 $ ./XtionImage -r 1 -s i -o /tmp/image.jpg
 ```
+![ScreenShot](https://github.com/rocapal/asusXtion/raw/master/images/ir-image.png)
 
 ## License
 
